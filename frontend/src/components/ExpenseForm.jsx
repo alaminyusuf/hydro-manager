@@ -87,7 +87,7 @@ const ExpenseForm = ({ onSuccess }) => {
 			}
 
 			// Using the POST /api/expenses route
-			await axios.post('/api/expenses', payload, config)
+			await axios.post('http://localhost:4000/api/expenses', payload, config)
 
 			// Success handler: reset form and call parent function
 			setFormData({

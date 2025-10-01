@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import axios from 'axios'
 import { AuthContext } from '../context/Authcontext'
+import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2'
 import { Link } from 'react-router-dom'
 
@@ -11,6 +12,7 @@ const Dashboard = () => {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 
+	
 	useEffect(() => {
 		const fetchData = async () => {
 			setLoading(true)
@@ -39,58 +41,31 @@ const Dashboard = () => {
 				console.error(
 					'Dashboard data fetch error:',
 					err.response?.data?.message || err.message
-				)
-				setError('Failed to load dashboard data.')
-				setLoading(false)
-			}
+					)
+					setError('Failed to load dashboard data.')
+					setLoading(false)
+				}
 		}
+	
 		fetchData()
 	}, [])
-
+	
 	if (loading)
-		return <div className='loading-state'>Loading dashboard... 🌿</div>
+	return <div className='loading-state'>Loading dashboard... 🌿</div>
 	if (error) return <div className='error-state'>Error: {error}</div>
-
+	
 	const financial = summary?.financialSummary
 	const expenseData = summary?.expensesByCategory
-
-	// Chart Configuration
-	const chartConfig = {
-		labels: expenseData.map((item) => item._id),
-		datasets: [
-			{
-				label: 'Total Expenses by Category',
-				data: expenseData.map((item) => item.total),
-				backgroundColor: [
-					'rgba(255, 99, 132, 0.6)',
-					'rgba(54, 162, 235, 0.6)',
-					'rgba(255, 206, 86, 0.6)',
-					'rgba(75, 192, 192, 0.6)',
-					'rgba(153, 102, 255, 0.6)',
-					'rgba(255, 159, 64, 0.6)',
-				],
-				borderColor: [
-					'rgba(255, 99, 132, 1)',
-					'rgba(54, 162, 235, 1)',
-					'rgba(255, 206, 86, 1)',
-					'rgba(75, 192, 192, 1)',
-					'rgba(153, 102, 255, 1)',
-					'rgba(255, 159, 64, 1)',
-				],
-				borderWidth: 1,
-			},
-		],
-	}
 
 	return (
 		<div className='dashboard-page'>
 			<h2>Welcome Back, {user.full_Name.split(' ')[0]}</h2>
 
 			<div className='card-container financial-cards'>
-				<div className='card balance-card'>
+				{/* <div className='card balance-card'>
 					<h3>Current Balance</h3>
 					<h1>{financial.balance.toFixed(2)}</h1>
-				</div>
+				</div> */}
 				<div className='card income-card'>
 					<h3>Total Income</h3>
 					<p>{financial.totalIncome.toFixed(2)}</p>
@@ -107,12 +82,7 @@ const Dashboard = () => {
 				<div className='chart-section'>
 					<h3>Expense Breakdown by Category</h3>
 					{expenseData && expenseData.length > 0 ? (
-						<div style={{ height: '400px' }}>
-							<Bar
-								data={chartConfig}
-								options={{ responsive: true, maintainAspectRatio: false }}
-							/>
-						</div>
+						<></>
 					) : (
 						<p>
 							No expense data to display yet.{' '}

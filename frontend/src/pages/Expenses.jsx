@@ -47,7 +47,7 @@ const Expenses = () => {
 
     return (
         <div className="expenses-page">
-            <h1>Financial Transactions Log 🧾</h1>
+            <h1>Financial Transactions Log</h1>
             
             <div className="utility-bar">
                 <Link to="/new-expense" className="btn btn-primary">+ New Transaction</Link>

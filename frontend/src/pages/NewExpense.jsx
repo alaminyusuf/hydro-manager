@@ -6,7 +6,6 @@ const NewExpense = () => {
 	const navigate = useNavigate()
 
 	const handleSuccess = () => {
-		alert('Transaction successfully logged!')
 		navigate('/expenses') 
 	}
 
