@@ -1,5 +1,7 @@
 const asyncHandler = require('express-async-handler')
+const mongoose = require('mongoose')
 const CropBatch = require('../models/CropBatch')
+const Expense = require('../models/Expense')
 
 // @desc    Get all crop batches for a user
 // @route   GET /api/batches
@@ -65,4 +67,87 @@ const logReading = asyncHandler(async (req, res) => {
 	res.json(batch)
 })
 
-module.exports = { getBatches, startBatch, logReading }
+// @desc    Get single crop batch details (including its financial summary)
+// @route   GET /api/batches/:id
+// @access  Private
+const getBatchDetails = asyncHandler(async (req, res) => {
+	const batchId = req.params.id
+	const userId = req.user.id
+
+	if (!mongoose.Types.ObjectId.isValid(batchId)) {
+		res.status(400).send('Invalid Batch ID format.')
+	}
+
+	const batchObjectId = new mongoose.Types.ObjectId(batchId)
+	const userObjectId = new mongoose.Types.ObjectId(userId)
+
+	// 1. Fetch the core batch document
+	const batch = await CropBatch.findOne({
+		_id: batchObjectId,
+		user: userObjectId,
+	})
+
+	if (!batch) {
+		res.status(404).send('Crop Batch not found or user not authorized.')
+	}
+
+	// 2. Combine and send the response
+	res.json({
+		batchDetails: batch,
+	})
+})
+
+// @desc    Update/set the harvest date for a crop batch (mark as complete)
+// @route   PUT /api/batches/:id/harvest
+// @access  Private
+const updateHarvestDate = asyncHandler(async (req, res) => {
+	const batchId = req.params.id
+	const { harvestDate } = req.body
+
+	if (!harvestDate) {
+		res.status(400).send('Harvest date is required.')
+	}
+
+	// 1. Find the existing batch to check its start date
+	const existingBatch = await CropBatch.findOne({
+		_id: batchId,
+		user: userId,
+	})
+
+	if (!existingBatch) {
+		res.status(404).send('Crop Batch not found or user not authorized.')
+	}
+
+	// Convert dates to comparable Date objects
+	const newHarvestDate = new Date(harvestDate)
+	const startDate = new Date(existingBatch.startDate)
+
+	// 2. 🚨 CRITICAL CHECK: Prevent harvest date before start date 🚨
+	if (newHarvestDate < startDate) {
+		res
+			.status(400)
+			.send(
+				`Harvest date (${newHarvestDate.toLocaleDateString()}) cannot be before the start date (${startDate.toLocaleDateString()}).`
+			)
+	}
+
+	const batch = await CropBatch.findOneAndUpdate(
+		{ _id: batchId, user: req.user.id }, // Find by ID and ensure ownership
+		{ $set: { harvestDate: new Date(harvestDate) } },
+		{ new: true, runValidators: true } // Return the updated document
+	)
+
+	if (!batch) {
+		res.status(404).send('Crop Batch not found or user not authorized.')
+	}
+
+	res.status(200).json(batch)
+})
+
+module.exports = {
+	getBatches,
+	startBatch,
+	logReading,
+	getBatchDetails,
+	updateHarvestDate,
+}

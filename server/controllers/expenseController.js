@@ -1,4 +1,5 @@
 const asyncHandler = require('express-async-handler')
+const mongoose = require('mongoose')
 const Expense = require('../models/Expense')
 
 // @desc    Get all expenses and incomes for a user
@@ -45,10 +46,11 @@ const addTransaction = asyncHandler(async (req, res) => {
 // @access  Private
 const getSummary = asyncHandler(async (req, res) => {
 	const userId = req.user.id
+	const userObjectId = new mongoose.Types.ObjectId(userId)
 
 	// Use MongoDB Aggregation Pipeline for fast calculations
 	const summary = await Expense.aggregate([
-		{ $match: { user: userId } }, // 1. Filter by current user
+		{ $match: { user: userObjectId } }, // 1. Filter by current user
 		{
 			$group: {
 				_id: null,
@@ -70,7 +72,7 @@ const getSummary = asyncHandler(async (req, res) => {
 
 	// Calculate expense breakdown by category for the chart
 	const expensesByCategory = await Expense.aggregate([
-		{ $match: { user: userId, isIncome: false } }, // 1. Filter user and expenses only
+		{ $match: { user: userObjectId, isIncome: false } }, // 1. Filter user and expenses only
 		{ $group: { _id: '$category', total: { $sum: '$amount' } } }, // 2. Group and sum by category
 		{ $sort: { total: -1 } }, // 3. Sort descending
 	])
