@@ -1,0 +1,36 @@
+#root {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 2rem;
+	text-align: center;
+}
+
+ul {
+	list-style-type: none;
+}
+
+.logo {
+	text-transform: uppercase;
+	font-size: 1.8rem;
+}
+
+.nav-links {
+	display: flex;
+	gap: 20px;
+}
+
+.form-group {
+	margin: 1rem 0;
+}
+
+.user-info {
+	display: flex;
+	margin-top: 2rem;
+	text-align: center;
+	justify-content: space-between;
+}
+
+.hello-name {
+	font-size: 1.45rem;
+	text-transform: capitalize;
+}
