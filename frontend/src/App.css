@@ -17,6 +17,11 @@ select {
 	padding: 5px;
 }
 
+th,
+td {
+	padding: 4px; /* Applies 10 pixels of padding on all sides */
+}
+
 .logo {
 	text-transform: uppercase;
 	font-size: 1.8rem;
