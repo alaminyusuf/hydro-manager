@@ -5,19 +5,19 @@ const {
 	addTransaction,
 	getSummary,
 } = require('../controllers/expenseController')
-const { protect } = require('../middleware/authMiddleware') // Import authentication middleware
+const { protect } = require('../middleware/authMiddleware')
 const { tenantHandler } = require('../middleware/tenantMiddleware')
+const { authorize } = require('../middleware/rbacMiddleware')
 
 // Protected Routes
 router.use(protect)
 router.use(tenantHandler)
 
-router
-	.route('/')
-	.get(getTransactions) // GET /api/expenses (Get all transactions)
-	.post(addTransaction) // POST /api/expenses (Add a new transaction)
+// All members can view transactions and summary
+router.get('/', getTransactions)
+router.get('/summary', getSummary)
 
-// Analytics Route
-router.get('/summary', getSummary) // GET /api/expenses/summary (Dashboard totals)
+// Only owner, admin, manager can add transactions
+router.post('/', authorize('owner', 'admin', 'manager'), addTransaction)
 
 module.exports = router

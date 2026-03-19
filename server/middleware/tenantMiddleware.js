@@ -24,6 +24,12 @@ const tenantHandler = asyncHandler(async (req, res, next) => {
 	req.tenantId = tenantId
 	req.organization = org
 
+	// Attach the user's role within the organization
+	const member = org.members.find(
+		(m) => m.user.toString() === req.user._id.toString()
+	)
+	req.memberRole = member ? member.role : null
+
 	next()
 })
 

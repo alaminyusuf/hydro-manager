@@ -51,7 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
 		const defaultOrg = await Organization.create({
 			name: `${full_Name}'s Farm`,
 			owner: user._id,
-			members: [{ user: user._id, role: 'admin' }],
+			members: [{ user: user._id, role: 'owner' }],
 			subscription: {
 				status: 'inactive',
 				plan: 'free'
