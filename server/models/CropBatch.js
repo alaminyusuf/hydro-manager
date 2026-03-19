@@ -1,5 +1,15 @@
 const mongoose = require('mongoose')
 
+const noteSchema = new mongoose.Schema({
+	text: { type: String, required: true },
+	author: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: true,
+	},
+	createdAt: { type: Date, default: Date.now },
+})
+
 const logSchema = new mongoose.Schema({
 	value: { type: Number, required: true },
 	loggedAt: { type: Date, default: Date.now },
@@ -23,10 +33,20 @@ const cropBatchSchema = new mongoose.Schema(
 			required: true,
 			enum: ['Lettuce', 'Herbs', 'Tomato', 'Other'],
 		},
+		status: {
+			type: String,
+			enum: ['planning', 'seeding', 'growing', 'harvesting', 'completed', 'archived'],
+			default: 'planning',
+		},
+		assignedTo: [{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+		}],
 		startDate: { type: Date, required: true },
-		harvestDate: { type: Date }, // Optional: Can be set on completion
-		pHLog: [logSchema], // Sub-document for manual pH readings
-		ecLog: [logSchema], // Sub-document for manual EC readings
+		harvestDate: { type: Date },
+		pHLog: [logSchema],
+		ecLog: [logSchema],
+		notes: [noteSchema],
 	},
 	{ timestamps: true }
 )
