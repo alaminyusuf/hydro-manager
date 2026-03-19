@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/Authcontext'
 
 const Header = () => {
-	const { user, logout } = useContext(AuthContext)
+	const { user, logout, activeOrg, organizations, setActiveOrg } = useContext(AuthContext)
 	const navigate = useNavigate()
 
 	const onLogout = () => {
@@ -30,7 +30,24 @@ const Header = () => {
 								<Link to='/batches'>Batches</Link>
 							</li>
 						
-						</ul><div className='user-info'>
+						</ul>
+						<div className='org-switcher'>
+							<select 
+								value={activeOrg || ''} 
+								onChange={(e) => setActiveOrg(e.target.value)}
+								className='org-select'
+							>
+								{organizations.length === 0 && (
+									<option value="" disabled>No Organizations</option>
+								)}
+								{organizations.map(org => (
+									<option key={org._id} value={org._id}>
+										{org.name}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className='user-info'>
 							<span className='hello-name'>Hello, {user.username}</span>
 							<button onClick={onLogout} className='btn btn-sm btn-logout'>
 								🚪 Logout

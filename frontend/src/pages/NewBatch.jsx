@@ -7,6 +7,7 @@ const CROP_TYPES = ['Lettuce', 'Herbs', 'Tomato', 'Cucumber', 'Strawberries', 'O
 
 const NewBatch = () => {
     const navigate = useNavigate();
+    const { activeOrg } = React.useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
         cropType: CROP_TYPES[0], // Default to the first type
@@ -30,18 +31,15 @@ const NewBatch = () => {
         setError(null);
         setSuccess(false);
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setError("Authorization required. Please log in.");
+        if (!activeOrg) {
+            setError("No active organization selected. Please select one in the header.");
             setLoading(false);
             return;
         }
 
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        
         try {
             // POST to the /api/batches route
-            await axios.post('http://localhost:4000/api/batches', formData, config); 
+            await axios.post('http://localhost:4000/api/batches', formData); 
             
             setSuccess(true);
             

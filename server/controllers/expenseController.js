@@ -7,7 +7,7 @@ const Expense = require('../models/Expense')
 // @access  Private
 const getTransactions = asyncHandler(async (req, res) => {
 	// req.user.id is set by authMiddleware
-	const transactions = await Expense.find({ user: req.user.id })
+	const transactions = await Expense.find({ organization: req.tenantId })
 		.sort({ date: -1 })
 		.populate('batch', 'name') // Fetch the batch name for display
 	res.json(transactions)
@@ -29,6 +29,7 @@ const addTransaction = asyncHandler(async (req, res) => {
 
 	const transaction = await Expense.create({
 		user: req.user.id,
+		organization: req.tenantId,
 		amount,
 		category,
 		isIncome,
@@ -45,12 +46,12 @@ const addTransaction = asyncHandler(async (req, res) => {
 // @route   GET /api/expenses/summary
 // @access  Private
 const getSummary = asyncHandler(async (req, res) => {
-	const userId = req.user.id
-	const userObjectId = new mongoose.Types.ObjectId(userId)
+	const tenantId = req.tenantId
+	const tenantObjectId = new mongoose.Types.ObjectId(tenantId)
 
 	// Use MongoDB Aggregation Pipeline for fast calculations
 	const summary = await Expense.aggregate([
-		{ $match: { user: userObjectId } }, // 1. Filter by current user
+		{ $match: { organization: tenantObjectId } }, // 1. Filter by current organization
 		{
 			$group: {
 				_id: null,
@@ -72,7 +73,7 @@ const getSummary = asyncHandler(async (req, res) => {
 
 	// Calculate expense breakdown by category for the chart
 	const expensesByCategory = await Expense.aggregate([
-		{ $match: { user: userObjectId, isIncome: false } }, // 1. Filter user and expenses only
+		{ $match: { organization: tenantObjectId, isIncome: false } }, // 1. Filter organization and expenses only
 		{ $group: { _id: '$category', total: { $sum: '$amount' } } }, // 2. Group and sum by category
 		{ $sort: { total: -1 } }, // 3. Sort descending
 	])

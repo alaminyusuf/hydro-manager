@@ -6,14 +6,18 @@ const {
 	getSummary,
 } = require('../controllers/expenseController')
 const { protect } = require('../middleware/authMiddleware') // Import authentication middleware
+const { tenantHandler } = require('../middleware/tenantMiddleware')
 
 // Protected Routes
+router.use(protect)
+router.use(tenantHandler)
+
 router
 	.route('/')
-	.get(protect, getTransactions) // GET /api/expenses (Get all transactions)
-	.post(protect, addTransaction) // POST /api/expenses (Add a new transaction)
+	.get(getTransactions) // GET /api/expenses (Get all transactions)
+	.post(addTransaction) // POST /api/expenses (Add a new transaction)
 
 // Analytics Route
-router.get('/summary', protect, getSummary) // GET /api/expenses/summary (Dashboard totals)
+router.get('/summary', getSummary) // GET /api/expenses/summary (Dashboard totals)
 
 module.exports = router

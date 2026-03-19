@@ -6,7 +6,7 @@ import { Bar } from 'react-chartjs-2'
 import { Link } from 'react-router-dom'
 
 const Dashboard = () => {
-	const { user } = useContext(AuthContext)
+	const { user, activeOrg } = useContext(AuthContext)
 	const [summary, setSummary] = useState(null)
 	const [batches, setBatches] = useState([])
 	const [loading, setLoading] = useState(true)
@@ -15,43 +15,48 @@ const Dashboard = () => {
 	
 	useEffect(() => {
 		const fetchData = async () => {
-			setLoading(true)
-			const token = localStorage.getItem('token')
-			if (!token) {
-				setError('Please log in to view the dashboard.')
+			if (!activeOrg) {
 				setLoading(false)
 				return
 			}
-
-			const config = { headers: { Authorization: `Bearer ${token}` } }
-
+			
+			setLoading(true)
 			try {
 				// Fetch Financial Summary
-				const summaryRes = await axios.get('http://localhost:4000/api/expenses/summary', config)
+				const summaryRes = await axios.get('http://localhost:4000/api/expenses/summary')
 				setSummary(summaryRes.data)
 
 				// Fetch Crop Batches
-				const batchesRes = await axios.get('http://localhost:4000/api/batches', config)
+				const batchesRes = await axios.get('http://localhost:4000/api/batches')
 				// Filter to show only active (not yet harvested) batches for the MVP
 				const activeBatches = batchesRes.data.filter((b) => !b.harvestDate)
 				setBatches(activeBatches)
 
 				setLoading(false)
+				setError(null)
 			} catch (err) {
 				console.error(
 					'Dashboard data fetch error:',
 					err.response?.data?.message || err.message
-					)
-					setError('Failed to load dashboard data.')
-					setLoading(false)
-				}
+				)
+				setError('Failed to load dashboard data.')
+				setLoading(false)
+			}
 		}
 	
 		fetchData()
-	}, [])
+	}, [activeOrg])
 	
+	if (!activeOrg)
+		return (
+			<div className='no-org-state'>
+				<h2>No Organization Selected</h2>
+				<p>Please select or create an organization to get started.</p>
+				<Link to='/organizations' className='btn'>Manage Organizations</Link>
+			</div>
+		)
 	if (loading)
-	return <div className='loading-state'>Loading dashboard... 🌿</div>
+		return <div className='loading-state'>Loading dashboard... 🌿</div>
 	if (error) return <div className='error-state'>Error: {error}</div>
 	
 	const financial = summary?.financialSummary

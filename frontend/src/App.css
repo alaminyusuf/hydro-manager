@@ -47,3 +47,25 @@ td {
 	font-size: 1.45rem;
 	text-transform: capitalize;
 }
+
+.org-switcher {
+	margin: 0 1rem;
+}
+
+.org-select {
+	padding: 8px 12px;
+	border-radius: 8px;
+	border: 1px solid #ccc;
+	background: rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(10px);
+	color: #333;
+	font-weight: 500;
+	cursor: pointer;
+	outline: none;
+	transition: all 0.3s ease;
+}
+
+.org-select:hover {
+	border-color: #646cff;
+	background: rgba(255, 255, 255, 0.2);
+}

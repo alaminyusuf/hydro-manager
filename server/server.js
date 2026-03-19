@@ -3,6 +3,7 @@ const cors = require('cors')
 const userRoutes = require('./routes/userRoutes')
 const expenseRoutes = require('./routes/expenseRoutes')
 const batchRoutes = require('./routes/cropBatchRoutes')
+const organizationRoutes = require('./routes/organizationRoutes')
 const connectDB = require('./config/db')
 
 connectDB()
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/users', userRoutes)
 app.use('/api/expenses', expenseRoutes)
 app.use('/api/batches', batchRoutes)
+app.use('/api/organizations', organizationRoutes)
 
 app.listen(4000, (err) => {
 	if (err) throw err

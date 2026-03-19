@@ -8,14 +8,18 @@ const {
 	updateHarvestDate,
 } = require('../controllers/cropBatchController')
 const { protect } = require('../middleware/authMiddleware')
+const { tenantHandler } = require('../middleware/tenantMiddleware')
+
+router.use(protect)
+router.use(tenantHandler)
 
 router
 	.route('/')
-	.get(protect, getBatches) // GET /api/batches (Get all crop batches)
-	.post(protect, startBatch) // POST /api/batches (Start a new crop batch)
-router.get('/:id', protect, getBatchDetails)
-router.put('/:id/harvest', protect, updateHarvestDate)
+	.get(getBatches) // GET /api/batches (Get all crop batches)
+	.post(startBatch) // POST /api/batches (Start a new crop batch)
+router.get('/:id', getBatchDetails)
+router.put('/:id/harvest', updateHarvestDate)
 // Log Reading Route
-router.put('/:id/log', protect, logReading) // PUT /api/batches/:id/log (Add pH or EC reading)
+router.put('/:id/log', logReading) // PUT /api/batches/:id/log (Add pH or EC reading)
 
 module.exports = router

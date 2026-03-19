@@ -9,6 +9,9 @@ export const AuthContext = createContext()
 export const AuthProvider = ({ children }) => {
 	// State to hold the authenticated user object
 	const [user, setUser] = useState(null)
+	// State for organizations
+	const [organizations, setOrganizations] = useState([])
+	const [activeOrg, setActiveOrg] = useState(null)
 	// State to track if the context is still loading data (e.g., from local storage)
 	const [isLoading, setIsLoading] = useState(true)
 	const navigate = useNavigate()
@@ -21,11 +24,20 @@ export const AuthProvider = ({ children }) => {
 		if (storedUser && storedToken) {
 			// Re-hydrate the state if credentials are found
 			try {
-				setUser(JSON.parse(storedUser))
+				const userData = JSON.parse(storedUser)
+				setUser(userData)
 				// Optionally set the default Authorization header for all future requests
 				axios.defaults.headers.common[
 					'Authorization'
 				] = `Bearer ${storedToken}`
+
+				const storedOrgId = localStorage.getItem('activeOrgId')
+				if (storedOrgId) {
+					setActiveOrg(storedOrgId)
+					axios.defaults.headers.common['x-tenant-id'] = storedOrgId
+				}
+				
+				fetchOrganizations()
 			} catch (error) {
 				console.error('Error parsing stored user data:', error)
 				// Clear invalid data
@@ -36,11 +48,12 @@ export const AuthProvider = ({ children }) => {
 	}, [])
 
 	// 4. Login Function
-	const login = async (Email, Password) => {
+	const login = async (email, password) => {
 		setIsLoading(true)
 		try {
+			console.log(email)
 			// POST to the updated login route
-			const res = await axios.post('http://localhost:4000/api/users/login', { Email, Password })
+			const res = await axios.post('http://localhost:4000/api/users/login', { email, password })
 			const { token, ...userData } = res.data
 
 			// Store credentials
@@ -83,21 +96,51 @@ export const AuthProvider = ({ children }) => {
 		}
 	}
 
-	// 6. Logout Function
+	// 6. Fetch Organizations
+	const fetchOrganizations = async () => {
+		try {
+			const res = await axios.get('http://localhost:4000/api/organizations')
+			setOrganizations(res.data)
+			
+			// If no active org is set, but some exist, pick the first one
+			const storedOrgId = localStorage.getItem('activeOrgId')
+			if (!storedOrgId && res.data.length > 0) {
+				handleSetActiveOrg(res.data[0]._id)
+			}
+		} catch (error) {
+			console.error('Error fetching organizations:', error)
+		}
+	}
+
+	// 7. Set Active Organization
+	const handleSetActiveOrg = (orgId) => {
+		setActiveOrg(orgId)
+		localStorage.setItem('activeOrgId', orgId)
+		axios.defaults.headers.common['x-tenant-id'] = orgId
+	}
+
+	// 8. Logout Function
 	const logout = () => {
 		localStorage.clear()
 		setUser(null)
+		setOrganizations([])
+		setActiveOrg(null)
 		delete axios.defaults.headers.common['Authorization']
+		delete axios.defaults.headers.common['x-tenant-id']
 		navigate('/login') // Redirect on logout
 	}
 
 	// 7. Value provided by the context
 	const contextValue = {
 		user,
+		organizations,
+		activeOrg,
 		isLoading,
 		login,
 		register,
 		logout,
+		fetchOrganizations,
+		setActiveOrg: handleSetActiveOrg,
 	}
 
 	return (

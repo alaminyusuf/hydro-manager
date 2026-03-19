@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema(
 			// Optional: Could store a URL to an image hosting service (e.g., Cloudinary, S3)
 			default: 'https://i.imgur.com/placeholder-user.png',
 		},
+		organizations: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'Organization',
+			},
+		],
 	},
 	{
 		timestamps: true,

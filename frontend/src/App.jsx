@@ -20,6 +20,7 @@ import TransactionsList from './pages/Expenses';
 import BatchManager from './pages/Batches';
 import NewBatch from './pages/NewBatch';
 import BatchDetails from './pages/BatchDetail';
+import Organizations from './pages/Organizations';
 
 // Custom component to handle protected routes
 const PrivateRoute = ({ children }) => {
@@ -88,6 +89,11 @@ function App() {
 							<Route path="/batches/:id" element={ 
 									<PrivateRoute>
 											<BatchDetails />
+									</PrivateRoute>
+} />
+							<Route path="/organizations" element={ 
+									<PrivateRoute>
+											<Organizations />
 									</PrivateRoute>
 } />
                            

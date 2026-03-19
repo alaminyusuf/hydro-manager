@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/Authcontext'
 
 const Batches = () => {
+    const { activeOrg } = useContext(AuthContext)
     const [batches, setBatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchBatches = async () => {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setError("Authorization failed. Please log in.");
+            if (!activeOrg) {
                 setLoading(false);
                 return;
             }
-
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             
+            setLoading(true);
             try {
                 // Uses the GET /api/batches route
-                const res = await axios.get('http://localhost:4000/api/batches', config); 
+                const res = await axios.get('http://localhost:4000/api/batches'); 
                 setBatches(res.data);
                 setLoading(false);
+                setError(null);
             } catch (err) {
                 console.error("Error fetching batches:", err);
                 setError("Failed to load crop batches.");
@@ -31,7 +30,7 @@ const Batches = () => {
             }
         };
         fetchBatches();
-    }, []);
+    }, [activeOrg]);
     
     // Simple function to determine if a batch is active or completed
     const getBatchStatus = (batch) => {
@@ -44,6 +43,14 @@ const Batches = () => {
         return { text: `Active (${daysActive} days)`, class: 'status-active' };
     };
 
+    if (!activeOrg)
+        return (
+            <div className='no-org-state'>
+                <h2>No Organization Selected</h2>
+                <p>Please select an organization to view grow batches.</p>
+                <Link to='/organizations' className='btn'>Manage Organizations</Link>
+            </div>
+        )
     if (loading) return <div className="loading-state">Loading crop cycles... 🥬</div>;
     if (error) return <div className="error-state">Error: {error}</div>;
 

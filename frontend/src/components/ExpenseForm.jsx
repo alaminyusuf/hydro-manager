@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import axios from 'axios'
+import { AuthContext } from '../context/Authcontext'
 
 // Define standard categories for the MVP
 const EXPENSE_CATEGORIES = [
@@ -15,6 +16,7 @@ const INCOME_CATEGORIES = ['Sales', 'Other Income']
 
 // Component accepts a prop to notify parent of a successful submission
 const ExpenseForm = ({ onSuccess }) => {
+	const { activeOrg } = useContext(AuthContext)
 	const [formData, setFormData] = useState({
 		amount: '',
 		isIncome: false,
@@ -29,16 +31,14 @@ const ExpenseForm = ({ onSuccess }) => {
 	// Fetch active crop batches when the component loads
 	useEffect(() => {
 		const fetchBatches = async () => {
-			const token = localStorage.getItem('token')
-			if (!token) {
-				setError('Please log in to add transactions.')
+			if (!activeOrg) {
 				setLoading(false)
 				return
 			}
+			setLoading(true)
 			try {
-				const config = { headers: { Authorization: `Bearer ${token}` } }
 				// Using the GET /api/batches route
-				const res = await axios.get('http://localhost:4000/api/batches', config)
+				const res = await axios.get('http://localhost:4000/api/batches')
 				setActiveBatches(res.data)
 				setLoading(false)
 			} catch (err) {
@@ -48,7 +48,7 @@ const ExpenseForm = ({ onSuccess }) => {
 			}
 		}
 		fetchBatches()
-	}, [])
+	}, [activeOrg])
 
 	const onChange = (e) => {
 		const value =
@@ -74,11 +74,13 @@ const ExpenseForm = ({ onSuccess }) => {
 	const onSubmit = async (e) => {
 		e.preventDefault()
 		setError(null)
-		const token = localStorage.getItem('token')
+		
+		if (!activeOrg) {
+			setError('No active organization selected. Please select one in the header.')
+			return
+		}
 
 		try {
-			const config = { headers: { Authorization: `Bearer ${token}` } }
-
 			// Adjust payload for the backend - amount must be a number
 			const payload = {
 				...formData,
@@ -87,7 +89,7 @@ const ExpenseForm = ({ onSuccess }) => {
 			}
 
 			// Using the POST /api/expenses route
-			await axios.post('http://localhost:4000/api/expenses', payload, config)
+			await axios.post('http://localhost:4000/api/expenses', payload)
 
 			// Success handler: reset form and call parent function
 			setFormData({

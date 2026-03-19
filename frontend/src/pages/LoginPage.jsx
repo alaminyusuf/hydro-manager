@@ -3,7 +3,7 @@ import { AuthContext } from '../context/Authcontext'
 import { Link, useNavigate } from 'react-router-dom'
 
 const Login = () => {
-	const [formData, setFormData] = useState({ Email: '', Password: '' })
+	const [formData, setFormData] = useState({ email: '', password: '' })
 	const [error, setError] = useState(null)
 	const { login, user, isLoading } = useContext(AuthContext)
 	const navigate = useNavigate()
@@ -24,7 +24,7 @@ const Login = () => {
 		setError(null)
 
 		try {
-			await login(formData.Email, formData.Password)
+			await login(formData.email, formData.password)
 			// Login successful, useEffect handles navigation
 		} catch (err) {
 			// Display error message from the backend controller
@@ -50,8 +50,8 @@ const Login = () => {
 						<input
 							type='email'
 							id='Email'
-							name='Email'
-							value={formData.Email}
+							name='email'
+							value={formData.email}
 							onChange={onChange}
 							required
 						/>
@@ -62,8 +62,8 @@ const Login = () => {
 						<input
 							type='password'
 							id='Password'
-							name='Password'
-							value={formData.Password}
+							name='password'
+							value={formData.password}
 							onChange={onChange}
 							required
 						/>

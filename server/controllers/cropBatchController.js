@@ -7,7 +7,7 @@ const Expense = require('../models/Expense')
 // @route   GET /api/batches
 // @access  Private
 const getBatches = asyncHandler(async (req, res) => {
-	const batches = await CropBatch.find({ user: req.user.id }).sort({
+	const batches = await CropBatch.find({ organization: req.tenantId }).sort({
 		startDate: -1,
 	})
 	res.json(batches)
@@ -27,6 +27,7 @@ const startBatch = asyncHandler(async (req, res) => {
 
 	const newBatch = await CropBatch.create({
 		user: req.user.id,
+		organization: req.tenantId,
 		name,
 		cropType,
 		startDate,
@@ -47,11 +48,10 @@ const logReading = asyncHandler(async (req, res) => {
 		res.status(400).send('Invalid log type or missing value.')
 	}
 
-	const batch = await CropBatch.findById(batchId)
-
-	if (!batch || batch.user.toString() !== req.user.id) {
-		res.status(404).send('Crop Batch not found or user not authorized.')
-	}
+	const batch = await CropBatch.findOne({
+		_id: batchId,
+		organization: req.tenantId,
+	})
 
 	// Add the new log entry (as a sub-document)
 	const logEntry = { value }
@@ -84,7 +84,7 @@ const getBatchDetails = asyncHandler(async (req, res) => {
 	// 1. Fetch the core batch document
 	const batch = await CropBatch.findOne({
 		_id: batchObjectId,
-		user: userObjectId,
+		organization: req.tenantId,
 	})
 
 	if (!batch) {
@@ -132,7 +132,7 @@ const updateHarvestDate = asyncHandler(async (req, res) => {
 	}
 
 	const batch = await CropBatch.findOneAndUpdate(
-		{ _id: batchId, user: req.user.id }, // Find by ID and ensure ownership
+		{ _id: batchId, organization: req.tenantId }, // Find by ID and ensure organization context
 		{ $set: { harvestDate: new Date(harvestDate) } },
 		{ new: true, runValidators: true } // Return the updated document
 	)

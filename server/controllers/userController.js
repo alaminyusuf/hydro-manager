@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const User = require('../models/User')
+const Organization = require('../models/Organization')
 
 // Helper function to generate JWT (remains the same)
 const generateToken = (id) => {
@@ -46,6 +47,21 @@ const registerUser = asyncHandler(async (req, res) => {
 	})
 
 	if (user) {
+		// Create default organization
+		const defaultOrg = await Organization.create({
+			name: `${full_Name}'s Farm`,
+			owner: user._id,
+			members: [{ user: user._id, role: 'admin' }],
+			subscription: {
+				status: 'inactive',
+				plan: 'free'
+			}
+		})
+
+		// Add organization to user
+		user.organizations.push(defaultOrg._id)
+		await user.save()
+
 		res.status(201).json({
 			_id: user._id,
 			full_Name: user.full_Name,
@@ -62,10 +78,15 @@ const registerUser = asyncHandler(async (req, res) => {
 // @desc    Authenticate user & get token
 // @route   POST /api/users/login
 // @access  Public
-const authUser = asyncHandler(async (req, res) => {
+const login = asyncHandler(async (req, res) => {
 	const { email, password } = req.body
 	// Find user by Email
+	console.log("Email: " + req.body)
+	// console.info("Body--- " + req.body)
 	const user = await User.findOne({ email })
+	console.log("User +:"+ user)
+	if(!user) return res.status(400).send('Email not found')
+	
 	const verified = await bcrypt.compare(password, user.password)
 
 	if (user && verified) {
@@ -82,4 +103,4 @@ const authUser = asyncHandler(async (req, res) => {
 	}
 })
 
-module.exports = { registerUser, authUser }
+module.exports = { registerUser, login }

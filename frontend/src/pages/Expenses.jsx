@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/Authcontext'
 
 const Expenses = () => {
+    const { activeOrg } = useContext(AuthContext)
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -10,21 +12,18 @@ const Expenses = () => {
 
     useEffect(() => {
         const fetchTransactions = async () => {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setError("Authorization failed. Please log in.");
+            if (!activeOrg) {
                 setLoading(false);
                 return;
             }
-
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             
+            setLoading(true);
             try {
                 // Uses the GET /api/expenses route
-                const res = await axios.get('http://localhost:4000/api/expenses', config); 
+                const res = await axios.get('http://localhost:4000/api/expenses'); 
                 setTransactions(res.data);
                 setLoading(false);
+                setError(null);
             } catch (err) {
                 console.error("Error fetching transactions:", err);
                 setError("Failed to load transactions.");
@@ -32,7 +31,7 @@ const Expenses = () => {
             }
         };
         fetchTransactions();
-    }, []);
+    }, [activeOrg]);
 
     // Filter transactions based on the selected type
     const filteredTransactions = transactions.filter(t => {
@@ -42,6 +41,14 @@ const Expenses = () => {
         return true;
     });
 
+    if (!activeOrg)
+        return (
+            <div className='no-org-state'>
+                <h2>No Organization Selected</h2>
+                <p>Please select an organization to view transactions.</p>
+                <Link to='/organizations' className='btn'>Manage Organizations</Link>
+            </div>
+        )
     if (loading) return <div className="loading-state">Loading transactions... ⏳</div>;
     if (error) return <div className="error-state">Error: {error}</div>;
 

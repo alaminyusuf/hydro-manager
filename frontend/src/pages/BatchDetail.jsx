@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
+import { AuthContext } from '../context/Authcontext'
 
 const LogReadingForm = ({ batchId, type, onUpdate }) => {
     const [value, setValue] = useState('');
@@ -18,12 +19,9 @@ const LogReadingForm = ({ batchId, type, onUpdate }) => {
             return;
         }
 
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        
         try {
             // PUT /api/batches/:id/log
-            await axios.put(`http://localhost:4000/api/batches/${batchId}/log`, { type, value: parseFloat(value) }, config);
+            await axios.put(`http://localhost:4000/api/batches/${batchId}/log`, { type, value: parseFloat(value) });
             setValue('');
             onUpdate(); // Refresh parent data
         } catch (err) {
@@ -62,12 +60,9 @@ const HarvestForm = ({ batchId, onUpdate, isHarvested }) => {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        
         try {
             // PUT /api/batches/:id/harvest
-            await axios.put(`http://localhost:4000/api/batches/${batchId}/harvest`, { harvestDate: date }, config);
+            await axios.put(`http://localhost:4000/api/batches/${batchId}/harvest`, { harvestDate: date });
             onUpdate(); // Refresh parent data
         } catch (err) {
             setError(err.response?.data?.message || "Failed to mark as harvested.");
@@ -98,17 +93,15 @@ const HarvestForm = ({ batchId, onUpdate, isHarvested }) => {
 
 const BatchDetails = () => {
     const { id: batchId } = useParams(); 
+    const { activeOrg } = useContext(AuthContext)
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // Function to fetch data (used in useEffect and as a callback for form submission)
     const fetchBatch = async () => {
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        
         try {
-            const res = await axios.get(`http://localhost:4000/api/batches/${batchId}`, config); 
+            const res = await axios.get(`http://localhost:4000/api/batches/${batchId}`); 
             setData(res.data);
             setLoading(false);
             setError(null); // Clear any previous errors
