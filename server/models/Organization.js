@@ -20,11 +20,21 @@ const organizationSchema = new mongoose.Schema(
 				},
 				role: {
 					type: String,
-					enum: ['admin', 'member'],
+					enum: ['owner', 'admin', 'manager', 'member'],
 					default: 'member',
 				},
 			},
 		],
+		settings: {
+			maxMembers: {
+				type: Number,
+				default: 5,
+			},
+			maxBatches: {
+				type: Number,
+				default: 10,
+			},
+		},
 		subscription: {
 			status: {
 				type: String,
