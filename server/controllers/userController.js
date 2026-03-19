@@ -81,10 +81,8 @@ const registerUser = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
 	const { email, password } = req.body
 	// Find user by Email
-	console.log("Email: " + req.body)
-	// console.info("Body--- " + req.body)
 	const user = await User.findOne({ email })
-	console.log("User +:"+ user)
+	
 	if(!user) return res.status(400).send('Email not found')
 	
 	const verified = await bcrypt.compare(password, user.password)

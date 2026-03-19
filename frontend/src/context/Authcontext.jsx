@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }) => {
 	const login = async (email, password) => {
 		setIsLoading(true)
 		try {
-			console.log(email)
 			// POST to the updated login route
 			const res = await axios.post('http://localhost:4000/api/users/login', { email, password })
 			const { token, ...userData } = res.data
@@ -78,7 +77,6 @@ export const AuthProvider = ({ children }) => {
 		try {
 			// POST to the updated registration route
 			const res = await axios.post('http://localhost:4000/api/users', userData)
-			console.log(res);
 			const { token, ...newUserData } = res.data
 
 			// Log in immediately after registration

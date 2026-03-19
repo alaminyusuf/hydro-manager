@@ -46,10 +46,10 @@ const Login = () => {
 					{error && <p className='error-message'>{error}</p>}
 
 					<div className='form-group'>
-						<label htmlFor='Email'>Email</label>
+						<label htmlFor='email'>Email</label>
 						<input
 							type='email'
-							id='Email'
+							id='email'
 							name='email'
 							value={formData.email}
 							onChange={onChange}
@@ -58,10 +58,10 @@ const Login = () => {
 					</div>
 
 					<div className='form-group'>
-						<label htmlFor='Password'>Password</label>
+						<label htmlFor='password'>Password</label>
 						<input
 							type='password'
-							id='Password'
+							id='password'
 							name='password'
 							value={formData.password}
 							onChange={onChange}
