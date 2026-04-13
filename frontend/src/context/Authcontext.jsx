@@ -12,9 +12,34 @@ export const AuthProvider = ({ children }) => {
 	// State for organizations
 	const [organizations, setOrganizations] = useState([])
 	const [activeOrg, setActiveOrg] = useState(null)
+	const [userRole, setUserRole] = useState(null)
 	// State to track if the context is still loading data (e.g., from local storage)
 	const [isLoading, setIsLoading] = useState(true)
 	const navigate = useNavigate()
+
+	// Helper to check if user has any of the required roles
+	const hasRole = (roles) => {
+		if (!userRole) return false
+		if (Array.isArray(roles)) {
+			return roles.includes(userRole)
+		}
+		return userRole === roles
+	}
+
+	// Internal helper to update userRole based on activeOrg and organizations list
+	const syncUserRole = (orgId, orgsList, currentUserId) => {
+		if (!orgId || !orgsList || !currentUserId) {
+			setUserRole(null)
+			return
+		}
+		const currentOrg = orgsList.find(org => org._id === orgId)
+		if (currentOrg && currentOrg.members) {
+			const member = currentOrg.members.find(m => m.user === currentUserId || m.user?._id === currentUserId)
+			setUserRole(member ? member.role : null)
+		} else {
+			setUserRole(null)
+		}
+	}
 
 	// 3. Load user from local storage on initial load
 	useEffect(() => {
@@ -37,7 +62,7 @@ export const AuthProvider = ({ children }) => {
 					axios.defaults.headers.common['x-tenant-id'] = storedOrgId
 				}
 				
-				fetchOrganizations()
+				fetchOrganizations(userData._id, storedOrgId)
 			} catch (error) {
 				console.error('Error parsing stored user data:', error)
 				// Clear invalid data
@@ -63,6 +88,9 @@ export const AuthProvider = ({ children }) => {
 			setUser(userData)
 			axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
+			// Fetch organizations to get role info
+			await fetchOrganizations(userData._id)
+
 			setIsLoading(false)
 			return res.data // Return data on success
 		} catch (error) {
@@ -86,6 +114,8 @@ export const AuthProvider = ({ children }) => {
 			setUser(newUserData)
 			axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
+			await fetchOrganizations(newUserData._id)
+
 			setIsLoading(false)
 			return res.data
 		} catch (error) {
@@ -95,15 +125,19 @@ export const AuthProvider = ({ children }) => {
 	}
 
 	// 6. Fetch Organizations
-	const fetchOrganizations = async () => {
+	const fetchOrganizations = async (userId = user?._id, orgIdToSet = activeOrg) => {
 		try {
 			const res = await axios.get('http://localhost:4000/api/organizations')
 			setOrganizations(res.data)
 			
 			// If no active org is set, but some exist, pick the first one
-			const storedOrgId = localStorage.getItem('activeOrgId')
-			if (!storedOrgId && res.data.length > 0) {
-				handleSetActiveOrg(res.data[0]._id)
+			let finalOrgId = orgIdToSet
+			if (!finalOrgId && res.data.length > 0) {
+				finalOrgId = res.data[0]._id
+			}
+			
+			if (finalOrgId) {
+				handleSetActiveOrg(finalOrgId, res.data, userId)
 			}
 		} catch (error) {
 			console.error('Error fetching organizations:', error)
@@ -111,10 +145,11 @@ export const AuthProvider = ({ children }) => {
 	}
 
 	// 7. Set Active Organization
-	const handleSetActiveOrg = (orgId) => {
+	const handleSetActiveOrg = (orgId, orgsList = organizations, userId = user?._id) => {
 		setActiveOrg(orgId)
 		localStorage.setItem('activeOrgId', orgId)
 		axios.defaults.headers.common['x-tenant-id'] = orgId
+		syncUserRole(orgId, orgsList, userId)
 	}
 
 	// 8. Logout Function
@@ -123,6 +158,7 @@ export const AuthProvider = ({ children }) => {
 		setUser(null)
 		setOrganizations([])
 		setActiveOrg(null)
+		setUserRole(null)
 		delete axios.defaults.headers.common['Authorization']
 		delete axios.defaults.headers.common['x-tenant-id']
 		navigate('/login') // Redirect on logout
@@ -133,12 +169,14 @@ export const AuthProvider = ({ children }) => {
 		user,
 		organizations,
 		activeOrg,
+		userRole,
 		isLoading,
 		login,
 		register,
 		logout,
 		fetchOrganizations,
 		setActiveOrg: handleSetActiveOrg,
+		hasRole,
 	}
 
 	return (

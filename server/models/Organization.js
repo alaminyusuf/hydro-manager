@@ -23,6 +23,8 @@ const organizationSchema = new mongoose.Schema(
 					enum: ['owner', 'admin', 'manager', 'member'],
 					default: 'member',
 				},
+				username: String,
+				email: String,
 			},
 		],
 		settings: {

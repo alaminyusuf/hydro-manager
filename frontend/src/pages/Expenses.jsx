@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/Authcontext'
 
 const Expenses = () => {
-    const { activeOrg } = useContext(AuthContext)
+    const { activeOrg, hasRole } = useContext(AuthContext)
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -57,7 +57,9 @@ const Expenses = () => {
             <h1>Financial Transactions Log</h1>
             
             <div className="utility-bar">
-                <Link to="/new-expense" className="btn btn-primary">+ New Transaction</Link>
+                {hasRole(['owner', 'admin', 'manager']) && (
+                    <Link to="/new-expense" className="btn btn-primary">+ New Transaction</Link>
+                )}
                 <div className="filter-group">
                     <label>Show:</label>
                     <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>

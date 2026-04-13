@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/Authcontext'
 
 // Define the available crop types for the dropdown
 const CROP_TYPES = ['Lettuce', 'Herbs', 'Tomato', 'Cucumber', 'Strawberries', 'Other'];
 
 const NewBatch = () => {
     const navigate = useNavigate();
-    const { activeOrg } = React.useContext(AuthContext);
+    const { activeOrg, hasRole } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
         cropType: CROP_TYPES[0], // Default to the first type

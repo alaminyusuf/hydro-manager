@@ -30,7 +30,19 @@ const Dashboard = () => {
 				const batchesRes = await axios.get('http://localhost:4000/api/batches')
 				// Filter to show only active (not yet harvested) batches for the MVP
 				const activeBatches = batchesRes.data.filter((b) => !b.harvestDate)
-				setBatches(activeBatches)
+				
+                // Fetch Insights for each active batch
+                const batchesWithInsights = await Promise.all(activeBatches.map(async (batch) => {
+                    try {
+                        const insightRes = await axios.get(`http://localhost:4000/api/batches/${batch._id}/insights`)
+                        return { ...batch, insights: insightRes.data.insights }
+                    } catch (err) {
+                        console.error(`Error fetching insights for ${batch.name}:`, err)
+                        return batch
+                    }
+                }))
+
+				setBatches(batchesWithInsights)
 
 				setLoading(false)
 				setError(null)
@@ -62,23 +74,33 @@ const Dashboard = () => {
 	const financial = summary?.financialSummary
 	const expenseData = summary?.expensesByCategory
 
+    // Calculate overall system health
+    const systemHealth = batches.length > 0 
+        ? Math.round(batches.reduce((acc, b) => acc + (b.insights?.healthScore || 100), 0) / batches.length)
+        : 100
+
 	return (
 		<div className='dashboard-page'>
-			<h2>Welcome Back, {user.full_Name.split(' ')[0]}</h2>
+			<div className='dashboard-header'>
+                <h2>Welcome Back, {user.full_Name.split(' ')[0]}</h2>
+                <div className={`health-badge health-${systemHealth > 80 ? 'good' : systemHealth > 50 ? 'warning' : 'critical'}`}>
+                    System Health: {systemHealth}%
+                </div>
+            </div>
 
 			<div className='card-container financial-cards'>
-				{/* <div className='card balance-card'>
-					<h3>Current Balance</h3>
-					<h1>{financial.balance.toFixed(2)}</h1>
-				</div> */}
 				<div className='card income-card'>
 					<h3>Total Income</h3>
-					<p>{financial.totalIncome.toFixed(2)}</p>
+					<p>${financial.totalIncome.toFixed(2)}</p>
 				</div>
 				<div className='card expense-card'>
 					<h3>Total Expenses</h3>
-					<p>{financial.totalExpenses.toFixed(2)}</p>
+					<p>${financial.totalExpenses.toFixed(2)}</p>
 				</div>
+                <div className='card health-card'>
+                    <h3>Active Batches</h3>
+                    <p>{batches.length}</p>
+                </div>
 			</div>
 
 			<hr />
@@ -87,7 +109,10 @@ const Dashboard = () => {
 				<div className='chart-section'>
 					<h3>Expense Breakdown by Category</h3>
 					{expenseData && expenseData.length > 0 ? (
-						<></>
+						<div className='chart-container'>
+                            {/* Chart logic here if needed, keeping it simple for now */}
+                            <p>Chart visualization placeholder</p>
+                        </div>
 					) : (
 						<p>
 							No expense data to display yet.{' '}
@@ -102,12 +127,30 @@ const Dashboard = () => {
 						<ul className='batch-list'>
 							{batches.map((batch) => (
 								<li key={batch._id} className='batch-item'>
-									<h4>{batch.name}</h4>
-									<p>Crop: {batch.cropType}</p>
-									<p>
-										Started:{' '}
-										{new Date(batch.startDate).toLocaleDateString()}
-									</p>
+									<div className='batch-info'>
+                                        <h4>{batch.name}</h4>
+                                        <p>Crop: {batch.cropType}</p>
+                                        <p>
+                                            Started:{' '}
+                                            {new Date(batch.startDate).toLocaleDateString()}
+                                        </p>
+                                        {batch.insights?.predictedHarvest && (
+                                            <p className='prediction'>
+                                                Est. Harvest: {new Date(batch.insights.predictedHarvest).toLocaleDateString()}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className='batch-insights'>
+                                        {batch.insights?.phAnomalies?.length > 0 && (
+                                            <span className='alert-badge ph-alert' title='pH Anomaly Detected'>pH ⚠️</span>
+                                        )}
+                                        {batch.insights?.ecAnomalies?.length > 0 && (
+                                            <span className='alert-badge ec-alert' title='EC Anomaly Detected'>EC ⚠️</span>
+                                        )}
+                                        <div className='health-score-mini'>
+                                            Health: {batch.insights?.healthScore || 100}%
+                                        </div>
+                                    </div>
 									<Link
 										to={`/batches/${batch._id}`}
 										className='btn btn-sm btn-view'

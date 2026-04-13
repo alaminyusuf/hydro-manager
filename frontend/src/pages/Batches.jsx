@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/Authcontext'
 
 const Batches = () => {
-    const { activeOrg } = useContext(AuthContext)
+    const { activeOrg, user, hasRole } = useContext(AuthContext)
     const [batches, setBatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filter, setFilter] = useState('all'); // 'all', 'mine'
 
     useEffect(() => {
         const fetchBatches = async () => {
@@ -32,16 +33,15 @@ const Batches = () => {
         fetchBatches();
     }, [activeOrg]);
     
-    // Simple function to determine if a batch is active or completed
-    const getBatchStatus = (batch) => {
-        if (batch.harvestDate) {
-            return { text: 'Harvested', class: 'status-harvested' };
+    const filteredBatches = batches.filter(batch => {
+        if (filter === 'all') return true;
+        if (filter === 'mine') {
+            return batch.assignedTo && batch.assignedTo.some(id => 
+                (id === user._id || id?._id === user._id)
+            );
         }
-        const today = new Date();
-        const start = new Date(batch.startDate);
-        const daysActive = Math.ceil((today - start) / (1000 * 60 * 60 * 24));
-        return { text: `Active (${daysActive} days)`, class: 'status-active' };
-    };
+        return true;
+    });
 
     if (!activeOrg)
         return (
@@ -56,41 +56,65 @@ const Batches = () => {
 
     return (
         <div className="batches-page">
-            <h1>Hydroponics Grow Batch Manager</h1>
+            <div className="title-row">
+                <h1>Hydroponics Grow Batch Manager</h1>
+                <div className="filter-tabs">
+                    <button 
+                        className={`tab-btn ${filter === 'all' ? 'active' : ''}`}
+                        onClick={() => setFilter('all')}
+                    >
+                        All Batches
+                    </button>
+                    <button 
+                        className={`tab-btn ${filter === 'mine' ? 'active' : ''}`}
+                        onClick={() => setFilter('mine')}
+                    >
+                        My Assignments
+                    </button>
+                </div>
+            </div>
             
             <div className="utility-bar">
-                {/* This link will take the user to a page to start a new batch */}
-                <Link to="/new-batch" className="btn btn-primary">+ Start New Batch</Link> 
+                {hasRole(['owner', 'admin', 'manager']) && (
+                    <Link to="/new-batch" className="btn btn-primary">+ Start New Batch</Link> 
+                )}
             </div>
 
-            {batches.length === 0 ? (
-                <p className='no-data-message'>You haven't started any grow cycles yet. Click 'Start New Batch' to begin tracking!</p>
+            {filteredBatches.length === 0 ? (
+                <p className='no-data-message'>
+                    {filter === 'mine' 
+                        ? "You haven't been assigned to any grow cycles yet." 
+                        : "No grow cycles found for your organization."}
+                </p>
             ) : (
                 <div className="batch-grid">
-                    {batches.map(batch => {
-                        const status = getBatchStatus(batch);
-                        return (
-                            <div key={batch._id} className={`batch-card ${status.class}`}>
+                    {filteredBatches.map(batch => (
+                        <div key={batch._id} className={`batch-card status-${batch.status}`}>
+                            <div className="batch-header">
                                 <h2>{batch.name}</h2>
-                                <p className='crop-type'>Crop: <strong>{batch.cropType}</strong></p>
-                                <p>Start Date: {new Date(batch.startDate).toLocaleDateString()}</p>
-                                <p>Harvest Date: {batch.harvestDate ? new Date(batch.harvestDate).toLocaleDateString() : 'N/A'}</p>
-                                <div className={`batch-status ${status.class}`}>
-                                    {status.text}
-                                </div>
-                                <div className='card-actions'>
-                                    {/* Future feature: Link to a detailed Batch view page */}
-                                    <Link to={`/batches/${batch._id}`} className='btn btn-sm btn-secondary'>
-                                        View Details & Logs
-                                    </Link>
-                                    {/* Future feature: Button to mark as harvested/completed */}
-                                    {!batch.harvestDate && (
-                                        <button className='btn btn-sm btn-success-outline'>Harvest</button>
-                                    )}
-                                </div>
+                                <span className={`status-badge ${batch.status}`}>{batch.status}</span>
                             </div>
-                        );
-                    })}
+                            <p className='crop-type'>Crop: <strong>{batch.cropType}</strong></p>
+                            <div className="batch-dates">
+                                <p>Start: {new Date(batch.startDate).toLocaleDateString()}</p>
+                                {batch.harvestDate && (
+                                    <p>Harvest: {new Date(batch.harvestDate).toLocaleDateString()}</p>
+                                )}
+                            </div>
+                            
+                            {batch.assignedTo && batch.assignedTo.length > 0 && (
+                                <div className="assigned-users">
+                                    <p>Assigned: {batch.assignedTo.length} members</p>
+                                </div>
+                            )}
+
+                            <div className='card-actions'>
+                                <Link to={`/batches/${batch._id}`} className='btn btn-sm btn-secondary'>
+                                    View Details & Logs
+                                </Link>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

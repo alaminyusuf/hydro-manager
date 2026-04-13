@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification')
+const socketService = require('../utils/socket')
 
 /**
  * Create a notification for a user.
@@ -15,8 +16,15 @@ const createNotification = async ({ recipient, organization, type, title, messag
 			relatedBatch: relatedBatch || undefined,
 		})
 
-		// TODO (Phase 2): Emit socket event to recipient
-		// io.to(`user:${recipient}`).emit('notification', notification)
+		// Emit socket event to recipient
+		try {
+			const io = socketService.getIO()
+			if (io) {
+				io.to(`user:${recipient}`).emit('notification', notification)
+			}
+		} catch (error) {
+			console.warn('Socket.io NOT initialized, skipping emission')
+		}
 
 		return notification
 	} catch (error) {
@@ -30,6 +38,19 @@ const createNotification = async ({ recipient, organization, type, title, messag
 const createBulkNotifications = async (notifications) => {
 	try {
 		const docs = await Notification.insertMany(notifications)
+
+		// Emit socket events to each recipient
+		try {
+			const io = socketService.getIO()
+			if (io) {
+				docs.forEach((doc) => {
+					io.to(`user:${doc.recipient}`).emit('notification', doc)
+				})
+			}
+		} catch (error) {
+			console.warn('Socket.io NOT initialized, skipping bulk emission')
+		}
+
 		return docs
 	} catch (error) {
 		console.error('Error creating bulk notifications:', error)

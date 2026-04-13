@@ -17,7 +17,7 @@ const createOrganization = asyncHandler(async (req, res) => {
 	const organization = await Organization.create({
 		name,
 		owner: req.user._id,
-		members: [{ user: req.user._id, role: 'owner' }],
+		members: [{ user: req.user._id, role: 'owner', username: req.user.username, email: req.user.email }],
 	})
 
 	// Add organization to user's list
@@ -74,7 +74,7 @@ const addMember = asyncHandler(async (req, res) => {
 		throw new Error('User is already a member')
 	}
 
-	org.members.push({ user: userToAdd._id, role: assignRole })
+	org.members.push({ user: userToAdd._id, role: assignRole, username: userToAdd.username, email: userToAdd.email })
 	await org.save()
 
 	// Update user's organizations list

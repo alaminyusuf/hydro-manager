@@ -2,8 +2,10 @@ import React, { useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/Authcontext'
 
+import NotificationPanel from './NotificationPanel'
+
 const Header = () => {
-	const { user, logout, activeOrg, organizations, setActiveOrg } = useContext(AuthContext)
+	const { user, logout, activeOrg, organizations, setActiveOrg, userRole } = useContext(AuthContext)
 	const navigate = useNavigate()
 
 	const onLogout = () => {
@@ -29,7 +31,9 @@ const Header = () => {
 							<li>
 								<Link to='/batches'>Batches</Link>
 							</li>
-						
+							<li>
+								<Link to='/organizations'>Organizations</Link>
+							</li>
 						</ul>
 						<div className='org-switcher'>
 							<select 
@@ -47,8 +51,9 @@ const Header = () => {
 								))}
 							</select>
 						</div>
+						<NotificationPanel />
 						<div className='user-info'>
-							<span className='hello-name'>Hello, {user.username}</span>
+							<span className='hello-name'>{user.username} ({userRole})</span>
 							<button onClick={onLogout} className='btn btn-sm btn-logout'>
 								🚪 Logout
 							</button>

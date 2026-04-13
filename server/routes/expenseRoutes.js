@@ -13,11 +13,40 @@ const { authorize } = require('../middleware/rbacMiddleware')
 router.use(protect)
 router.use(tenantHandler)
 
-// All members can view transactions and summary
+/**
+ * @swagger
+ * /api/expenses:
+ *   get:
+ *     summary: Get all expense transactions
+ *     tags: [Expenses]
+ *     responses:
+ *       200:
+ *         description: List of transactions
+ */
 router.get('/', getTransactions)
+
+/**
+ * @swagger
+ * /api/expenses/summary:
+ *   get:
+ *     summary: Get financial summary
+ *     tags: [Expenses]
+ *     responses:
+ *       200:
+ *         description: Financial summary by category and totals
+ */
 router.get('/summary', getSummary)
 
-// Only owner, admin, manager can add transactions
+/**
+ * @swagger
+ * /api/expenses:
+ *   post:
+ *     summary: Add a new expense transaction
+ *     tags: [Expenses]
+ *     responses:
+ *       201:
+ *         description: Transaction added successfully
+ */
 router.post('/', authorize('owner', 'admin', 'manager'), addTransaction)
 
 module.exports = router
