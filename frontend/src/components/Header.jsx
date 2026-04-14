@@ -34,6 +34,9 @@ const Header = () => {
 							<li>
 								<Link to='/organizations'>Organizations</Link>
 							</li>
+							<li>
+								<Link to='/simulation'>Demo</Link>
+							</li>
 						</ul>
 						<div className='org-switcher'>
 							<select 

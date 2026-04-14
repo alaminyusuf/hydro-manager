@@ -51,6 +51,7 @@ const organizationSchema = new mongoose.Schema(
 				default: 'free',
 			},
 		},
+		isSimulation: { type: Boolean, default: false },
 	},
 	{
 		timestamps: true,

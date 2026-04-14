@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
 				ref: 'Organization',
 			},
 		],
+		isSimulation: { type: Boolean, default: false },
 	},
 	{
 		timestamps: true,

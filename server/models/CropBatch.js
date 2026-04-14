@@ -47,6 +47,7 @@ const cropBatchSchema = new mongoose.Schema(
 		pHLog: [logSchema],
 		ecLog: [logSchema],
 		notes: [noteSchema],
+		isSimulation: { type: Boolean, default: false },
 	},
 	{ timestamps: true }
 )

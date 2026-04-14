@@ -21,6 +21,7 @@ import BatchManager from './pages/Batches';
 import NewBatch from './pages/NewBatch';
 import BatchDetails from './pages/BatchDetail';
 import Organizations from './pages/Organizations';
+import SimulationPanel from './pages/SimulationPanel';
 
 // Custom component to handle protected routes
 const PrivateRoute = ({ children }) => {
@@ -96,6 +97,8 @@ function App() {
 											<Organizations />
 									</PrivateRoute>
 } />
+							{/* Public simulation demo — no auth required */}
+							<Route path="/simulation" element={<SimulationPanel />} />
                            
 
 							{/* 404 Catch-all Route */}
