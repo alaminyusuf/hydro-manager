@@ -5,6 +5,9 @@ import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend }
 import { Bar } from 'react-chartjs-2'
 import { Link } from 'react-router-dom'
 
+// Register Chart.js components
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
 const Dashboard = () => {
 	const { user, activeOrg } = useContext(AuthContext)
 	const [summary, setSummary] = useState(null)
@@ -79,6 +82,51 @@ const Dashboard = () => {
         ? Math.round(batches.reduce((acc, b) => acc + (b.insights?.healthScore || 100), 0) / batches.length)
         : 100
 
+    // Prepare Chart Data
+    const chartData = {
+        labels: expenseData.map(item => item._id || 'Unknown'),
+        datasets: [
+            {
+                label: 'Expenses by Category ($)',
+                data: expenseData.map(item => item.total),
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(255, 205, 86, 0.6)',
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 205, 86, 1)',
+                ],
+                borderWidth: 1,
+            },
+        ],
+    };
+
+    const chartOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: (value) => `$${value}`,
+                },
+            },
+        },
+    };
+
 	return (
 		<div className='dashboard-page'>
 			<div className='dashboard-header'>
@@ -110,8 +158,7 @@ const Dashboard = () => {
 					<h3>Expense Breakdown by Category</h3>
 					{expenseData && expenseData.length > 0 ? (
 						<div className='chart-container'>
-                            {/* Chart logic here if needed, keeping it simple for now */}
-                            <p>Chart visualization placeholder</p>
+                            <Bar data={chartData} options={chartOptions} />
                         </div>
 					) : (
 						<p>
