@@ -34,9 +34,6 @@ const Header = () => {
 							<li>
 								<Link to='/organizations'>Organizations</Link>
 							</li>
-							<li>
-								<Link to='/simulation'>Demo</Link>
-							</li>
 						</ul>
 						<div className='org-switcher'>
 							<select 
@@ -64,6 +61,9 @@ const Header = () => {
 				) : (
 					// Public View
 					<ul className='nav-links'>
+						<li>
+							<Link to='/simulation'>Demo</Link>
+						</li>
 						<li>
 							<Link to='/login'>Login</Link>
 						</li>

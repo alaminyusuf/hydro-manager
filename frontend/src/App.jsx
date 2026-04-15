@@ -23,6 +23,17 @@ import BatchDetails from './pages/BatchDetail';
 import Organizations from './pages/Organizations';
 import SimulationPanel from './pages/SimulationPanel';
 
+// Custom component to handle guest-only routes (redirects to dashboard if logged in)
+const PublicRoute = ({ children }) => {
+	const { user, isLoading } = React.useContext(AuthContext)
+
+	if (isLoading) {
+		return <div className='loading-app'>Loading application...</div>
+	}
+
+	return user ? <Navigate to='/dashboard' /> : children
+}
+
 // Custom component to handle protected routes
 const PrivateRoute = ({ children }) => {
 	const { user, isLoading } = React.useContext(AuthContext)
@@ -47,9 +58,10 @@ function App() {
 					<main className='content-area'>
 						{/* 3. Define the application routes */}
 						<Routes>
-							{/* Public Routes */}
-							<Route path='/login' element={<Login />} />
-							<Route path='/register' element={<SignupPage />} />
+							{/* Public Routes restricted for guests only */}
+							<Route path='/login' element={<PublicRoute><Login /></PublicRoute>} />
+							<Route path='/register' element={<PublicRoute><SignupPage /></PublicRoute>} />
+							<Route path="/simulation" element={<PublicRoute><SimulationPanel /></PublicRoute>} />
 
 							{/* Redirect root path to Dashboard */}
 							<Route path='/' element={<Navigate to='/dashboard' />} />
@@ -97,8 +109,6 @@ function App() {
 											<Organizations />
 									</PrivateRoute>
 } />
-							{/* Public simulation demo — no auth required */}
-							<Route path="/simulation" element={<SimulationPanel />} />
                            
 
 							{/* 404 Catch-all Route */}
