@@ -28,13 +28,16 @@ describe('Notification Routes', () => {
         it('should return all notifications for the user', async () => {
             const mockNotifications = [{ title: 'New Batch' }, { title: 'Status Change' }]
             jest.spyOn(Notification, 'find').mockReturnValue({
-                sort: jest.fn().mockResolvedValue(mockNotifications)
+                populate: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockResolvedValue(mockNotifications)
             })
+            jest.spyOn(Notification, 'countDocuments').mockResolvedValue(0)
 
             const res = await request(app).get('/api/notifications')
 
             expect(res.statusCode).toEqual(200)
-            expect(res.body).toEqual(mockNotifications)
+            expect(res.body.notifications).toEqual(mockNotifications)
             expect(Notification.find).toHaveBeenCalledWith({ recipient: '507f1f77bcf86cd799439011' })
         })
     })
@@ -58,16 +61,15 @@ describe('Notification Routes', () => {
         it('should mark a single notification as read', async () => {
             const mockNotification = {
                 _id: 'notifid',
-                read: false,
-                save: jest.fn().mockResolvedValue(this)
+                read: true
             }
-            jest.spyOn(Notification, 'findOne').mockResolvedValue(mockNotification)
+            jest.spyOn(Notification, 'findOneAndUpdate').mockResolvedValue(mockNotification)
 
             const res = await request(app).put('/api/notifications/notifid/read')
 
             expect(res.statusCode).toEqual(200)
-            expect(mockNotification.read).toBe(true)
-            expect(mockNotification.save).toHaveBeenCalled()
+            expect(res.body.read).toBe(true)
+            expect(Notification.findOneAndUpdate).toHaveBeenCalled()
         })
     })
 })

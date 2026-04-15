@@ -1,6 +1,7 @@
 const request = require('supertest')
 const express = require('express')
 const User = require('../models/User')
+const Organization = require('../models/Organization')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -11,12 +12,14 @@ app.use('/api/users', require('../routes/userRoutes'))
 
 // Simple error handler
 app.use((err, req, res, next) => {
-    res.status(res.statusCode || 500).json({ message: err.message })
+    const statusCode = res.statusCode === 200 ? 500 : res.statusCode
+    res.status(statusCode).json({ message: err.message })
 })
 
 describe('User Routes', () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        jest.spyOn(Organization, 'create').mockResolvedValue({ _id: 'orgid' })
     })
 
     describe('POST /api/users', () => {
@@ -32,7 +35,9 @@ describe('User Routes', () => {
             jest.spyOn(User, 'create').mockResolvedValue({
                 _id: 'userid',
                 ...userData,
-                password: 'hashedpassword'
+                password: 'hashedpassword',
+                organizations: [],
+                save: jest.fn().mockResolvedValue(this)
             })
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
 
@@ -42,6 +47,7 @@ describe('User Routes', () => {
             expect(res.body).toHaveProperty('token')
             expect(res.body.username).toBe(userData.username)
             expect(User.create).toHaveBeenCalled()
+            expect(Organization.create).toHaveBeenCalled()
         })
 
         it('should return 400 if user already exists', async () => {
@@ -55,7 +61,7 @@ describe('User Routes', () => {
             })
 
             expect(res.statusCode).toEqual(400)
-            expect(res.body.message).toBe('User already exists')
+            expect(res.body.message).toMatch(/already exists/)
         })
     })
 
@@ -91,7 +97,7 @@ describe('User Routes', () => {
             })
 
             expect(res.statusCode).toEqual(401)
-            expect(res.body.message).toBe('Invalid credentials')
+            expect(res.body.message).toMatch(/Invalid email or password/)
         })
     })
 })

@@ -25,8 +25,8 @@ jest.mock('../middleware/authMiddleware', () => ({
 }))
 
 jest.mock('../middleware/tenantMiddleware', () => ({
-	tenantHandler: (req, res, next) => {
-		req.tenantId = '507f1f77bcf86cd799439012'
+    tenantHandler: (req, res, next) => {
+        req.tenantId = '507f1f77bcf86cd799439012'
         req.organization = {
             _id: '507f1f77bcf86cd799439012',
             members: [
@@ -34,8 +34,8 @@ jest.mock('../middleware/tenantMiddleware', () => ({
                 { user: '507f1f77bcf86cd799439022', role: 'member' }
             ]
         }
-		next()
-	},
+        next()
+    },
 }))
 
 jest.mock('../middleware/rbacMiddleware', () => ({
@@ -257,7 +257,7 @@ describe('Crop Batch Routes', () => {
             expect(res.statusCode).toEqual(200)
             expect(mockBatch.assignedTo).toEqual(userIds)
             expect(mockBatch.save).toHaveBeenCalled()
-            expect(mockBatch.populate).toHaveBeenCalledWith('assignedTo', 'full_Name email')
+            expect(mockBatch.populate).toHaveBeenCalledWith('assignedTo', 'full_Name username email')
         })
 
         it('should return 400 if any user is not a member of the org', async () => {

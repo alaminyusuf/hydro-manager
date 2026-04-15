@@ -260,6 +260,17 @@ const assignBatch = asyncHandler(async (req, res) => {
 	const previousAssignments = (batch.assignedTo || []).filter(id => id).map(id => id.toString());
 	const newAssignments = userIds.filter(id => !previousAssignments.includes(id));
 
+	// Verify all users are members of the organization
+	const orgMemberIds = (req.organization.members || []).map((m) => (m.user?._id || m.user).toString())
+	const invalidUsers = userIds.filter((id) => !orgMemberIds.includes(id))
+
+	if (invalidUsers.length > 0) {
+		res.status(400)
+		throw new Error(
+			`The following users are not members of this organization: ${invalidUsers.join(', ')}`
+		)
+	}
+
 	batch.assignedTo = userIds
 	await batch.save()
 

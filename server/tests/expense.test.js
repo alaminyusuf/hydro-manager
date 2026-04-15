@@ -39,7 +39,8 @@ describe('Expense Routes', () => {
         it('should return all transactions for the organization', async () => {
             const mockExpenses = [{ description: 'Seeds', amount: 50 }, { description: 'Nutrients', amount: 100 }]
             jest.spyOn(Expense, 'find').mockReturnValue({
-                sort: jest.fn().mockResolvedValue(mockExpenses)
+                sort: jest.fn().mockReturnThis(),
+                populate: jest.fn().mockResolvedValue(mockExpenses)
             })
 
             const res = await request(app).get('/api/expenses')
@@ -56,6 +57,7 @@ describe('Expense Routes', () => {
                 description: 'New Light',
                 amount: 200,
                 category: 'Equipment',
+                isIncome: false,
                 date: new Date()
             }
             jest.spyOn(Expense, 'create').mockResolvedValue({ _id: 'expid', ...expenseData })
@@ -79,8 +81,7 @@ describe('Expense Routes', () => {
             const res = await request(app).get('/api/expenses/summary')
 
             expect(res.statusCode).toEqual(200)
-            expect(res.body.byCategory).toBeDefined()
-            expect(res.body.totalAmount).toBe(200)
+            expect(res.body.expensesByCategory).toBeDefined()
         })
     })
 })

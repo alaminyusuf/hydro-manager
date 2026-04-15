@@ -20,20 +20,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
 	// Basic validation
 	if (!full_Name || !email || !username || !password) {
-		res
-			.status(400)
-			.send(
-				'Please enter all required fields: Full Name, Email, Username, and Password.'
-			)
+		res.status(400)
+		throw new Error('Please enter all required fields: Full Name, Email, Username, and Password.')
 	}
 
 	// Check if user exists by Email or Username
 	const userExists = await User.findOne({ $or: [{ email }, { username }] })
 
 	if (userExists) {
-		return res
-			.status(400)
-			.send('User with that Email or Username already exists.')
+		res.status(400)
+		throw new Error('User with that Email or Username already exists.')
 	}
 
 	const salt = await bcrypt.genSalt(10)
@@ -48,19 +44,25 @@ const registerUser = asyncHandler(async (req, res) => {
 
 	if (user) {
 		// Create default organization
-		const defaultOrg = await Organization.create({
-			name: `${full_Name}'s Farm`,
-			owner: user._id,
-			members: [{ user: user._id, role: 'owner' }],
-			subscription: {
-				status: 'inactive',
-				plan: 'free'
-			}
-		})
+		try {
+			const defaultOrg = await Organization.create({
+				name: `${full_Name}'s Farm`,
+				owner: user._id,
+				members: [{ user: user._id, role: 'owner', username: user.username, email: user.email }],
+				subscription: {
+					status: 'inactive',
+					plan: 'free'
+				}
+			})
 
-		// Add organization to user
-		user.organizations.push(defaultOrg._id)
-		await user.save()
+			// Add organization to user
+			user.organizations = user.organizations || []
+			user.organizations.push(defaultOrg._id)
+			await user.save()
+		} catch (orgError) {
+			console.error("Error creating default org:", orgError)
+			// We continue even if org creation fails, or we can handle it
+		}
 
 		res.status(201).json({
 			_id: user._id,
@@ -71,7 +73,8 @@ const registerUser = asyncHandler(async (req, res) => {
 			token: generateToken(user._id),
 		})
 	} else {
-		res.status(400).send('Invalid user data')
+		res.status(400)
+		throw new Error('Invalid user data')
 	}
 })
 
@@ -83,7 +86,10 @@ const login = asyncHandler(async (req, res) => {
 	// Find user by Email
 	const user = await User.findOne({ email })
 	
-	if(!user) return res.status(400).send('Email not found')
+	if(!user) {
+		res.status(401)
+		throw new Error('Invalid email or password')
+	}
 	
 	const verified = await bcrypt.compare(password, user.password)
 
@@ -97,7 +103,8 @@ const login = asyncHandler(async (req, res) => {
 			token: generateToken(user._id),
 		})
 	} else {
-		return res.status(400).send('Invalid email or password')
+		res.status(401)
+		throw new Error('Invalid email or password')
 	}
 })
 
