@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/Authcontext';
 
 const NotificationPanel = () => {
-    const { user } = useContext(AuthContext);
+    const { user, fetchOrganizations } = useContext(AuthContext);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -43,9 +43,16 @@ const NotificationPanel = () => {
 
     const markAsRead = async (id) => {
         try {
+            const notification = notifications.find(n => n._id === id);
             await axios.put(`http://localhost:4000/api/notifications/${id}/read`);
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
             setUnreadCount(prev => Math.max(0, prev - 1));
+
+            // If it's a member_added notification, refresh organizations
+            if (notification && notification.type === 'member_added') {
+                console.log("Member added notification detected, refreshing organizations...");
+                fetchOrganizations();
+            }
         } catch (err) {
             console.error('Error marking notification as read:', err);
         }

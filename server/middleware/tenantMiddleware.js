@@ -24,9 +24,15 @@ const tenantHandler = asyncHandler(async (req, res, next) => {
 	req.tenantId = tenantId
 	req.organization = org
 
+	if (!org.members) {
+		console.error('Organization found but members array is missing:', org)
+		res.status(500)
+		throw new Error('Internal Server Error: Organization members data missing')
+	}
+
 	// Attach the user's role within the organization
 	const member = org.members.find(
-		(m) => m.user.toString() === req.user._id.toString()
+		(m) => m.user && m.user.toString() === req.user._id.toString()
 	)
 	req.memberRole = member ? member.role : null
 

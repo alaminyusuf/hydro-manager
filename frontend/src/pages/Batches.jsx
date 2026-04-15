@@ -11,6 +11,15 @@ const Batches = () => {
     const [filter, setFilter] = useState('all'); // 'all', 'mine'
 
     useEffect(() => {
+        // If user is just a member, default to 'mine'. Otherwise 'all'
+        if (hasRole && !hasRole(['owner', 'admin', 'manager'])) {
+            setFilter('mine');
+        } else {
+            setFilter('all');
+        }
+    }, [hasRole]);
+
+    useEffect(() => {
         const fetchBatches = async () => {
             if (!activeOrg) {
                 setLoading(false);
@@ -33,12 +42,18 @@ const Batches = () => {
         fetchBatches();
     }, [activeOrg]);
     
+    useEffect(() => {
+        console.log("Batches page context:", { activeOrg, userId: user?._id });
+    }, [activeOrg, user]);
+
     const filteredBatches = batches.filter(batch => {
         if (filter === 'all') return true;
         if (filter === 'mine') {
-            return batch.assignedTo && batch.assignedTo.some(id => 
-                (id === user._id || id?._id === user._id)
-            );
+            const currentUserId = user?._id?.toString();
+            return batch.assignedTo && batch.assignedTo.some(id => {
+                const assignedId = (id?._id || id)?.toString();
+                return assignedId === currentUserId;
+            });
         }
         return true;
     });

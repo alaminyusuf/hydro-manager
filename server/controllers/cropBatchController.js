@@ -242,7 +242,7 @@ const assignBatch = asyncHandler(async (req, res) => {
 	const { userIds } = req.body
 	console.log("User Ids "+userIds)
 
-	if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+	if (!userIds || !Array.isArray(userIds)) {
 		res.status(400)
 		throw new Error('Please provide an array of user IDs to assign.')
 	}
@@ -257,18 +257,8 @@ const assignBatch = asyncHandler(async (req, res) => {
 		throw new Error('Crop Batch not found.')
 	}
 
-	// Verify all users are members of the organization
-	const orgMemberIds = (req.organization.members || []).map((m) => m.user?.toString())
-	// console.log("Org Members "+orgMemberIds)
-	// const invalidUsers = userIds.filter((id) => !orgMemberIds.includes(id))
-	// console.log("Invalid Users -"+invalidUsers)
-
-	// if (invalidUsers.length > 0) {
-	// 	res.status(400)
-	// 	throw new Error(
-	// 		`The following users are not members of this organization: ${invalidUsers.join(', ')}`
-	// 	)
-	// }
+	const previousAssignments = (batch.assignedTo || []).filter(id => id).map(id => id.toString());
+	const newAssignments = userIds.filter(id => !previousAssignments.includes(id));
 
 	batch.assignedTo = userIds
 	await batch.save()
@@ -276,17 +266,19 @@ const assignBatch = asyncHandler(async (req, res) => {
 	await batch.populate('assignedTo', 'full_Name username email')
 	res.status(200).json(batch)
 
-	const notifications = orgMemberIds
-		.filter((id) => id !== req.user._id.toString())
-		.map((userId) => ({
-			recipient: userId,
-			organization: req.tenantId,
-			type: 'batch_assigned',
-			title: 'New batch assignment',
-			message: `You have been assigned to batch "${batch.name}".`,
-			relatedBatch: batch._id,
-		}))
-	if (notifications.length > 0) createBulkNotifications(notifications)
+	if (newAssignments.length > 0) {
+		const notifications = newAssignments
+			.filter((id) => id !== req.user._id.toString())
+			.map((userId) => ({
+				recipient: userId,
+				organization: req.tenantId,
+				type: 'batch_assigned',
+				title: 'New batch assignment',
+				message: `You have been assigned to batch "${batch.name}".`,
+				relatedBatch: batch._id,
+			}))
+		if (notifications.length > 0) createBulkNotifications(notifications)
+	}
 })
 
 // @desc    Get AI insights for a batch

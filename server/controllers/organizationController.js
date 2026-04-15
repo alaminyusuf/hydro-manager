@@ -14,6 +14,27 @@ const createOrganization = asyncHandler(async (req, res) => {
 		throw new Error('Please add an organization name')
 	}
 
+	// SaaS Limits Check
+	const user = await User.findById(req.user._id).populate('organizations')
+	const ownedOrgs = await Organization.find({ owner: req.user._id })
+	const ownedCount = ownedOrgs.length
+	const totalCount = req.user.organizations?.length || 0
+
+	if (!user.isPremium) {
+		if (totalCount >= 2) {
+			res.status(403)
+			throw new Error('Free users can only be part of up to 2 farms total.')
+		}
+		if (ownedCount >= 1) {
+			res.status(403)
+			throw new Error('Free users can only own one farm. Upgrade to premium to create more.')
+		}
+	} else {
+		// Premium limits - although user said "more than 5", I'll set a high limit or no limit for now.
+		// If they want exactly 5 as a limit for some tier, they didn't specify.
+		// "premium can own more than 5 farms" implies no strict low limit.
+	}
+
 	const organization = await Organization.create({
 		name,
 		owner: req.user._id,

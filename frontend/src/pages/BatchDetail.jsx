@@ -14,7 +14,6 @@ const BatchDetails = () => {
     const [error, setError] = useState(null);
 
     const currentOrg = organizations.find(o => o._id === activeOrg);
-    console.log(currentOrg)
 
     const fetchBatch = async () => {
         try {
